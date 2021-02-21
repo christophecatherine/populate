@@ -1,0 +1,75 @@
+<div class="container">
+    <div class="row">
+        <!-- GET -->
+        <div class="col-md-3">
+            <h1>GET</h1>
+            <div class="card">
+                <div class="card-body">
+                    <!--methode GET-->
+                    <ul class="list-group list-group-flush">
+                        <!--pour handelbars-->
+                        {{#each product}}
+                        <!--pour handelbars this recuperer title pour product-->
+                        <li class="list-group-item">{{this.title}}</li>
+                        {{/each}}
+                    </ul>
+                    <!--/-->
+                </div>
+            </div>
+        </div>
+
+        <!-- POST -->
+        <div class="col-md-3">
+            <h1>POST</h1>
+            <div class="card">
+                <div class="card-body">
+
+                    <!--methode POST avec / pour url-->
+                    <form method="POST" action="/">
+                        <div class="form-group">
+                            <label>Title</label>
+                            <input class="form-control" type="text" name="title">
+                        </div>
+                        <div class="form-group">
+                            <label>Content</label>
+                            <input class="form-control" type="text" name="content">
+                        </div>
+                        <div class="form-group">
+                            <label>Price</label>
+                            <input class="form-control" type="text" name="price">
+                        </div>
+                        <button type="submit" class="btn btn-primary">Submit</button>
+                    </form>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- PUT -->
+        <div class="col-md-3">
+            <h1>PUT</h1>
+            <div class="card">
+                <div class="card-body">
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item">
+
+
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- DELETE -->
+        <div class="col-md-3">
+            <h1>DELETE</h1>
+            <div class="card">
+                <div class="card-body">
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
