@@ -4,23 +4,50 @@ const mongoose = require("mongoose");
 const exphbs = require("express-handlebars");
 const Handlebars = require("handlebars");
 const methodeOverride = require("method-override");
+const path = require("path")
 
 //Upload image
 const multer = require("multer")
-    //recupere le file img en discktorage
+//recupere le file img en discktorage
 const storage = multer.diskStorage({
-    destination: function(req, file, cb) {
+    //on envoie le file dans le fichier uploads
+    destination: function (req, file, cb) {
         //callBack avec null et le chemin du fichier
         cb(null, './public/uploads')
     },
 
-    filename: function(req, file, cb) {
-        cb(null, file.fieldname + '-' + Date.now())
+    filename: function (req, file, cb) {
+
+        //on donne un nom au file
+        const ext = path.extname(file.originalname);
+        // on donne une date
+        const date = Date.now();
+
+        // cb(null, file.originalname + '-' + date  + ext) ou =>
+        cb(null, date + '-' + file.originalname)
+
     }
 })
-
-const upload = multer({ storage: storage })
-    //var upload = multer({    dest: 'uploads/'})
+//filtre le format de l'image 
+const upload = multer({
+    storage: storage,
+    limits: {
+        fileSize: 4 * 2048 * 2048,
+        files: 1,
+    },
+    // permet de filter les differents formats des images
+    fileFilter: function (req, file, cb) {
+        if (
+            file.mimetype === "image/png" ||
+            file.mimetype === "image/pjp" ||
+            file.mimetype === "image/gif"
+        ) {
+            cb(null, true)
+        } else
+            cb(new Error("Le fichier doit etre au format png, jpg, gif"))
+    }
+})
+//var upload = multer({    dest: 'uploads/'})
 
 //Dans les versions nouvelles est remplace par .lean 
 const {
@@ -86,7 +113,7 @@ app.route("/")
     .get(
         (req, res) => {
             Product
-                .find(function(err, produit) {
+                .find(function (err, produit) {
                     if (!err) {
                         res.render('index', {
                             product: produit
@@ -95,9 +122,9 @@ app.route("/")
                         res.send(err)
                     }
                 })
-                //Nouvelle version de const {
-                //  allowInsecurePrototypeAccess
-                //} = require('@handlebars/allow-prototype-access')
+            //Nouvelle version de const {
+            //  allowInsecurePrototypeAccess
+            //} = require('@handlebars/allow-prototype-access')
 
             // Product
             //     .findOne({ title: "gdfsf" })
@@ -113,38 +140,50 @@ app.route("/")
             //     })
         })
 
-//methode POST
-//middleware upload.single
-.post(upload.single("cover"),
-    (req, res) => {
+    //methode POST
+    //middleware upload.single
+    .post(upload.single("cover"),
+        (req, res) => {
 
-        // recupere notre fichier 
-        const file = req.file;
-        console.log(file);
+            // recupere notre fichier 
+            const file = req.file;
+            console.log(file);
 
-        //creer une instatnce de product 
-        const newProduct = new Product({
-            title: req.body.title,
-            content: req.body.content,
-            price: req.body.price
-        });
+            //creer une instatnce de product 
+            const newProduct = new Product({
+                title: req.body.title,
+                content: req.body.content,
+                price: req.body.price
+            });
 
-        //recupere le new file pour l'integrer dans la propriete schema cover
-        if (file) {
-            newProduct.cover = {
-                name: file.filename,
-                originalName: file.originalname,
-                //path: "uploads/" + filename
-                //permet de recupere le file public 
-                path: file.path.replace("public", ""),
-                createAT: Date.now()
+            //recupere le new file pour l'integrer dans la propriete schema cover
+            if (file) {
+                newProduct.cover = {
+                    name: file.filename,
+                    originalName: file.originalname,
+                    //path: "uploads/" + filename
+                    //permet de recupere le file public 
+                    path: file.path.replace("public", ""),
+                    createAT: Date.now()
+                }
             }
-        }
 
-        //sauvegarde dans la base de donnee
-        newProduct.save(function(err) {
+            //sauvegarde dans la base de donnee
+            newProduct.save(function (err) {
+                if (!err) {
+                    res.send("save ok !")
+                } else {
+                    res.send(err)
+                }
+            })
+        })
+
+
+    //methode DELETE
+    .delete(function (req, res) {
+        Product.deleteMany(function (err) {
             if (!err) {
-                res.send("save ok !")
+                res.send("All delete")
             } else {
                 res.send(err)
             }
@@ -152,24 +191,12 @@ app.route("/")
     })
 
 
-//methode DELETE
-.delete(function(req, res) {
-    Product.deleteMany(function(err) {
-        if (!err) {
-            res.send("All delete")
-        } else {
-            res.send(err)
-        }
-    })
-})
-
-
 
 // Route edition
 //recupere l'id de notre article 
 app.route("/:id")
     //method GET
-    .get(function(req, res) {
+    .get(function (req, res) {
         // Adventure.findOne({ country: 'Croatia' }, function (err, adventure) {});
         //recupere Product
         Product.findOne(
@@ -177,7 +204,7 @@ app.route("/:id")
             {
                 _id: req.params.id
             },
-            function(err, produit) {
+            function (err, produit) {
                 if (!err) {
                     // res. render dans la page edition
                     res.render("edition", {
@@ -194,54 +221,54 @@ app.route("/:id")
         )
     })
 
-//method PUT pour mettre a jour les infos 
-.put(function(req, res) {
-    Product.updateOne(
-        //condition qui recupere l'id
-        {
-            _id: req.params.id
-        },
+    //method PUT pour mettre a jour les infos 
+    .put(function (req, res) {
+        Product.updateOne(
+            //condition qui recupere l'id
+            {
+                _id: req.params.id
+            },
 
-        //updateOne qui recupere les valeurs
-        {
-            title: req.body.title,
-            content: req.body.content,
-            price: req.body.price,
-        },
+            //updateOne qui recupere les valeurs
+            {
+                title: req.body.title,
+                content: req.body.content,
+                price: req.body.price,
+            },
 
 
-        //option faire plusieurs modification en meme temps
-        {
-            multi: true
-        },
-        //exec
-        function(err) {
-            if (!err) {
-                res.send("updateOne OK !")
-            } else {
-                res.send(err)
+            //option faire plusieurs modification en meme temps
+            {
+                multi: true
+            },
+            //exec
+            function (err) {
+                if (!err) {
+                    res.send("updateOne OK !")
+                } else {
+                    res.send(err)
+                }
             }
-        }
-    )
-})
+        )
+    })
 
-//method DELETE pour filtrer 
-.delete(function(req, res) {
-    Product.deleteOne({
-            _id: req.params.id
-        },
-        //on supprime l'element en fonction de son id
-        function(err) {
-            if (!err) {
-                res.send("product delete")
-            } else {
-                res.send(err)
+    //method DELETE pour filtrer 
+    .delete(function (req, res) {
+        Product.deleteOne({
+                _id: req.params.id
+            },
+            //on supprime l'element en fonction de son id
+            function (err) {
+                if (!err) {
+                    res.send("product delete")
+                } else {
+                    res.send(err)
+                }
             }
-        }
-    )
-})
+        )
+    })
 
-app.listen(port, function() {
+app.listen(port, function () {
     console.log(`écoute le port ${port}, lancé à : ${new Date().toLocaleString()}`);
 
 })
